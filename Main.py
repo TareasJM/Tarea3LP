@@ -5,6 +5,7 @@ from Web import *
 import webbrowser
 from Tkinter import *
 from ttk import Frame, Button, Style
+from PIL import Image, ImageTk
 
 
 class MainWindow(Frame):
@@ -14,7 +15,11 @@ class MainWindow(Frame):
          
 
         self.parent = parent
-        
+        self.content = Canvas()
+        self.canvas_objects = []
+        self.vbar = 0
+        self.temp = 0
+
         self.initUI()
         
     def initUI(self):
@@ -23,75 +28,81 @@ class MainWindow(Frame):
         self.style = Style()
         self.style.theme_use("default")
 
-        content = Canvas()
-        content.pack(fill=BOTH, expand=1)
+        self.content.pack(fill=BOTH, expand=1)
 
         self.web = Web();
         
-        vbar=Scrollbar(self,orient=VERTICAL)
-        vbar.pack(side=RIGHT,fill=Y)
-        vbar.config(command=content.yview)
-        content.config(yscrollcommand=vbar.set)
-        content.config(scrollregion=(0, 0, 0, 0))
+        self.vbar=Scrollbar(self,orient=VERTICAL)
+        self.vbar.pack(side=RIGHT,fill=Y)
+        self.vbar.config(command=self.content.yview)
+        self.content.config(yscrollcommand=self.vbar.set)
 
-        content.create_rectangle(0,0,300,100, fill="green")
-
-        tokenButton = Button(content, text="Get Token", command=lambda: self.buttonToken(tokenButton, content))
+        tokenButton = Button(self.content, text="Get Token", command=lambda: self.buttonToken(tokenButton))
         tokenButton.place(x=110, y=240)
+        self.canvas_objects.append(tokenButton)
 
-        outButton = Button(self, text="I'm out", command=self.buttonOut)
+        outButton = Button(self, text="I'm out", command=lambda: self.buttonOut())
         outButton.pack(side=RIGHT)
-        whoButton = Button(self, text="Who?", command=self.buttonWho(content))
+        whoButton = Button(self, text="Who?", command=lambda: self.buttonWho())
         whoButton.pack(side=RIGHT)
-        themButton = Button(self, text="Them", command=lambda: self.buttonThem(content))
+        themButton = Button(self, text="Them", command=lambda: self.buttonThem())
         themButton.pack(side=RIGHT)
-        meButton = Button(self, text="Me", command=lambda: self.buttonMe(content))
+        meButton = Button(self, text="Me", command=lambda: self.buttonMe())
         meButton.pack(side=RIGHT)
 
         self.pack() 
 
-    def buttonToken(self, button, content):
-        button.destroy()
-        content.delete("all")
-        e = Entry(content)
+    def clearCanvas(self):
+        self.content.delete("all")
+        for i in range(len(self.canvas_objects)):
+            self.canvas_objects[i].destroy()
+        self.content.yview_moveto(0)
+
+    def buttonToken(self, button):
+        self.clearCanvas()
+        e = Entry(self.content)
         e.config(width=298)
         e.place(y=210)
         e.focus()
-        button = Button(content, text="set", command=lambda: self.saveToken(e.get(), content, button, e))
+        button = Button(self.content, text="set", command=lambda: self.saveToken(e.get()))
         button.place(x=110, y=240)
         webbrowser.open(self.web.get_token_url)
 
-    def saveToken(self, new_token, content, button, entry):
+    def saveToken(self, new_token):
         self.web.setToken(new_token)
-        content.delete("all")
-        entry.destroy()
-        button.destroy()
+        self.clearCanvas()
 
-    def buttonThem(self, content):
+    def buttonThem(self):
         if self.web.token =="":
             return
-        content.delete("all")
+        self.clearCanvas()
         for x in range(0,20,2):
-            content.create_rectangle(0,0+(100*x),300,100+(100*x), fill="blue")
-            content.create_rectangle(0,0+(100*(x+1)),300,100+(100*(x+1)), fill="red")
-
-        content.config(scrollregion=(0, 1520, 0, 480))
+            self.content.create_rectangle(0,0+(100*x),300,100+(100*x), fill="blue")
+            self.content.create_rectangle(0,0+(100*(x+1)),300,100+(100*(x+1)), fill="red")
     
-    def buttonMe(self, content):
+    def buttonMe(self):
         if self.web.token =="":
             return
-        content.delete("all")
+        self.clearCanvas()
         profile = self.web.myProfile()
 
-        content.create_text(150,10, text=profile['username'])
-        content.create_text(150,30, text=profile['bio'])
-        content.create_text(150,50, text=profile['website'])
-        content.create_text(150,70, text=profile['profile_picture'])
+        img = Image.open(profile['picture_file'])
+        imgTk = ImageTk.PhotoImage(img)
+        self.content.create_image(75, 10, anchor=NW, image=imgTk)
+        self.canvas_objects.append(imgTk)
+
+        self.content.create_text(150,190, text=profile['username'])
+        self.content.create_text(150,210, text=profile['bio'])
+        self.content.create_text(150,230, text=profile['website'])
+
+        for x in range(0,20,2):
+            self.content.create_rectangle(0,350+(100*x),300,450+(100*x), fill="blue")
+            self.content.create_rectangle(0,350+(100*(x+1)),300,450+(100*(x+1)), fill="green")
     
-    def buttonWho(self, content):
+    def buttonWho(self):
         if self.web.token =="":
             return
-        content.delete("all")
+        self.clearCanvas()
 
     def buttonOut(self):
         raise SystemExit

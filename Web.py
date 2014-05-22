@@ -1,4 +1,4 @@
-from urllib import *
+import urllib
 from urllib2 import *
 import cookielib
 import re
@@ -9,7 +9,8 @@ class Web():
 	client_secret = "a8e0ad3201bc496187049e194c18614e"
 	redirect_uri = "http://neopixel.org"
 	get_token_url = "https://api.instagram.com/oauth/authorize/?client_id="+client_id+"&redirect_uri="+redirect_uri+"&response_type=token"
-	token = ""
+	# token = ""
+	token = "1320147380.9119878.78616813f823443692c94eca4b551f12"
 
 	def setToken(self, newToken):
 		Web.token = newToken
@@ -31,7 +32,14 @@ class Web():
 			profile['website'] = tmatch.group(1)
 		tmatch = re.search(r'"profile_picture":"(.*?)",', the_page)
 		if tmatch:
-			profile['profile_picture'] = tmatch.group(1)
+			image = tmatch.group(1).replace('\\','')
+			imagecode = "temp/"+image[40:]
+			profile['profile_picture'] = image
+			profile['picture_file'] = imagecode
+			f = open(imagecode,'wb')
+			f.write(urllib.urlopen(image).read())
+			f.close()
+
 
 		return profile
 
