@@ -2,45 +2,122 @@ import urllib
 from urllib2 import *
 import cookielib
 import re
+from httplib2 import Http
 
 class Web():
 	profile_id = "1320147380"
-	client_id = "9119878932724a62af94b0725cd415f7"
-	client_secret = "a8e0ad3201bc496187049e194c18614e"
+	client_id = "b4a37965871b48f79e5365fa097f8e24"
+	client_secret = "3f0f335f1cf648a7b0de9ecbbb55941b"
 	redirect_uri = "http://neopixel.org"
 	get_token_url = "https://api.instagram.com/oauth/authorize/?client_id="+client_id+"&redirect_uri="+redirect_uri+"&response_type=token"
 	# token = ""
-	token = "1320147380.9119878.78616813f823443692c94eca4b551f12"
+	token = "1320147380.b4a3796.86fc6de63606444e9e34e795a6793606"
 
 	def setToken(self, newToken):
 		Web.token = newToken
 
-	def myProfile(self):
-		query = "https://api.instagram.com/v1/users/1320147380?access_token="+Web.token
-		response = urlopen(query)
-		the_page = response.read()
+	def profile(self, profile_id):
+		print profile_id
+		query = "https://api.instagram.com/v1/users/"+profile_id+"?access_token="+Web.token
+		try:
+			response = urlopen(query)
+			the_page = response.read()
+		except HTTPError:
+			print "HTTP Error 400: BAD REQUEST (posible private)"
+			return 0
 
 		profile = {}
+		profile["profile_id"] = profile_id
 		tmatch = re.search(r'"username":"(.*?)",', the_page)
-		if tmatch:
-			profile['username'] = tmatch.group(1)
+		
+		profile['username'] = tmatch.group(1)
 		tmatch = re.search(r'"bio":"(.*?)",', the_page)
-		if tmatch:
-			profile['bio'] = tmatch.group(1)
+		
+		profile['bio'] = tmatch.group(1)
 		tmatch = re.search(r'"website":"(.*?)",', the_page)
-		if tmatch:
-			profile['website'] = tmatch.group(1)
+		
+		profile['website'] = tmatch.group(1).replace('\\','')
 		tmatch = re.search(r'"profile_picture":"(.*?)",', the_page)
-		if tmatch:
-			image = tmatch.group(1).replace('\\','')
-			imagecode = "temp/"+image[40:]
-			profile['profile_picture'] = image
-			profile['picture_file'] = imagecode
-			f = open(imagecode,'wb')
-			f.write(urllib.urlopen(image).read())
-			f.close()
+		
+		image = tmatch.group(1).replace('\\','')
+		imagecode = "temp/"+image[40:]
+		profile['profile_picture'] = image
+		profile['picture_file'] = imagecode
+		f = open(imagecode,'wb')
+		f.write(urllib.urlopen(image).read())
+		f.close()
 
+		query = "https://api.instagram.com/v1/users/"+profile_id+"/media/recent?count=20&access_token="+Web.token
+		response = urlopen(query)
+		the_page = response.read()
+		profile['images'] = []
+		tmatch1 = re.findall(r'"thumbnail":{"url":"(.*?)"', the_page)
+		tmatch2 = re.findall(r'"caption":(.*?),(.*?),', the_page)
+		if len(tmatch1) > 0:
+			for x in xrange(0,len(tmatch1)):
+				image = tmatch1[x].replace('\\','')
+				imagecode = "temp/"+re.search(r"http://(.*?)/(.*?)@", image+'@').group(2).replace("/", "-")
+				
+				f = open(imagecode,'wb')
+				f.write(urllib.urlopen(image).read())
+				f.close()
+				if tmatch2[x][0] == 'null':
+					profile['images'].append((image, imagecode, 'No caption'))
+				else:
+					try:
+						caption = re.search(r'"text":"(.*?)"', tmatch2[x][1])
+						caption = caption.group(1).replace('\\','')
+						profile['images'].append([image, imagecode, caption])
+					except Exception, e:
+						continue
 
+		
+		if profile_id == self.profile_id:
+			profile['following'] = 2
+		else:
+			query = "https://api.instagram.com//v1/users/"+profile_id+"/relationship?access_token="+Web.token
+			response = urlopen(query)
+			the_page = response.read()
+			
+			regex = r'"data":{"outgoing_status":"(.*?)","target_user_is_private":(.*?),"incoming_status":"(.*?)"}'
+			match = re.search(regex, the_page)
+			if match.group(1) == 'follows':
+				profile['following'] = 1
+			else:
+				profile['following'] = 0
+				
 		return profile
+
+	def search(self, string):
+		string = string.replace(" ", "%20")
+		query = "https://api.instagram.com/v1/users/search?q="+string+"&count=20&access_token="+Web.token
+		response = urlopen(query)
+		the_page = response.read()
+		regex = r'"username":"(.*?)","bio":"(.*?)","website":"(.*?)","profile_picture":"(.*?)","full_name":"(.*?)","id":"(.*?)"'
+		tmatch = re.findall(regex, the_page)
+		profiles = []
+		for x in xrange(0,len(tmatch)):
+				profile = tmatch[x]
+				image = profile[3].replace('\\','')
+				imagecode = "temp/"+image[40:].replace("/", "-")
+				f = open(imagecode,'wb')
+				f.write(urllib.urlopen(image).read())
+				f.close()
+				profiles.append((profile[0],profile[1],profile[2],imagecode,profile[4],profile[5]))
+				
+		return profiles
+
+	def follow(self, follow, profile_id):
+		url = 'https://api.instagram.com/v1/users/'+profile_id+'/relationship?access_token='+Web.token
+
+		if follow == 1:
+			value = {'action':'follow'}
+		else:
+			value = {'action':'unfollow'}
+
+		data = urllib.urlencode(value)
+		response = urllib.urlopen(url, data)
+		the_page = response.read()
+		print the_page
 
 
