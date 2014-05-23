@@ -3,6 +3,7 @@ from urllib2 import *
 import cookielib
 import re
 from httplib2 import Http
+import os
 
 class Web():
 	profile_id = "1320147380"
@@ -11,7 +12,7 @@ class Web():
 	redirect_uri = "http://neopixel.org"
 	get_token_url = "https://api.instagram.com/oauth/authorize/?client_id="+client_id+"&redirect_uri="+redirect_uri+"&response_type=token"
 	# token = ""
-	token = "1320147380.b4a3796.86fc6de63606444e9e34e795a6793606"
+	token = "1320147380.b4a3796.86fc6de63606444e9e34e795a6793606"	
 
 	def setToken(self, newToken):
 		Web.token = newToken
@@ -43,9 +44,14 @@ class Web():
 		imagecode = "temp/"+image[40:]
 		profile['profile_picture'] = image
 		profile['picture_file'] = imagecode
-		f = open(imagecode,'wb')
-		f.write(urllib.urlopen(image).read())
-		f.close()
+
+		if not os.path.exists("temp/"):
+		    os.makedirs("temp/")
+
+		if not os.path.exists(imagecode):
+			f = open(imagecode,'wb')
+			f.write(urllib.urlopen(image).read())
+			f.close()
 
 		query = "https://api.instagram.com/v1/users/"+profile_id+"/media/recent?count=20&access_token="+Web.token
 		response = urlopen(query)
@@ -58,9 +64,11 @@ class Web():
 				image = tmatch1[x].replace('\\','')
 				imagecode = "temp/"+re.search(r"http://(.*?)/(.*?)@", image+'@').group(2).replace("/", "-")
 				
-				f = open(imagecode,'wb')
-				f.write(urllib.urlopen(image).read())
-				f.close()
+				if not os.path.exists(imagecode):
+					f = open(imagecode,'wb')
+					f.write(urllib.urlopen(image).read())
+					f.close()
+				
 				if tmatch2[x][0] == 'null':
 					profile['images'].append((image, imagecode, 'No caption'))
 				else:
@@ -100,9 +108,15 @@ class Web():
 				profile = tmatch[x]
 				image = profile[3].replace('\\','')
 				imagecode = "temp/"+image[40:].replace("/", "-")
-				f = open(imagecode,'wb')
-				f.write(urllib.urlopen(image).read())
-				f.close()
+
+				if not os.path.exists("temp/"):
+				    os.makedirs("temp/")
+
+				if not os.path.exists(imagecode):
+					f = open(imagecode,'wb')
+					f.write(urllib.urlopen(image).read())
+					f.close()
+				    				
 				profiles.append((profile[0],profile[1],profile[2],imagecode,profile[4],profile[5]))
 				
 		return profiles
@@ -119,5 +133,34 @@ class Web():
 		response = urllib.urlopen(url, data)
 		the_page = response.read()
 		print the_page
+
+	def feed(self):
+		query = "https://api.instagram.com/v1/users/self/feed?count=50&access_token="+Web.token
+		response = urlopen(query)
+		the_page = response.read()
+		feed = []
+		tmatch = re.findall(r'"thumbnail":{"url":"(.*?)",[^@]+,"caption":(.*?),"from":{"username":"(.*?)"', the_page)
+		if len(tmatch) > 0:
+			for x in xrange(0,len(tmatch)):
+				image = tmatch[x][0].replace('\\','')
+				imagecode = "temp/"+re.search(r"http://(.*?)/(.*?)@", image+'@').group(2).replace("/", "-")
+
+				username = tmatch[x][2]
+				
+				if not os.path.exists(imagecode):
+					f = open(imagecode,'wb')
+					f.write(urllib.urlopen(image).read())
+					f.close()
+				
+				if tmatch[x][1] == 'null':
+					feed.append([username, image, imagecode, 'No caption'])
+				else:
+					try:
+						caption = re.search(r'"text":"(.*?)"', tmatch[x][1])
+						caption = caption.group(1).replace('\\','')
+						feed.append([username, image, imagecode, caption])
+					except Exception, e:
+						continue
+		return feed
 
 

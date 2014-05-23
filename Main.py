@@ -124,7 +124,22 @@ class MainWindow(Frame):
             button_window = self.content.create_window(200, 250, window=button)
             self.canvas_objects.append(button)
             self.canvas_objects.append(button_window)
+    
+    def buttonThem(self):
+        if self.web.token =="":
+            return
+        self.clearCanvas()
+        feeds = self.web.feed()
 
+        color = ["#989898","#D6D6D6"]
+        for x in range(0,len(feeds)):
+            self.content.create_rectangle(0,(160*x),400,160+(160*x), fill=color[x%2])
+            img = Image.open(feeds[x][2])
+            imgTk = ImageTk.PhotoImage(img)
+            self.content.create_image(80,80+(160*x), image=imgTk)
+            self.canvas_objects.append(imgTk)
+            self.content.create_text(260,10+(160*x), text=feeds[x][0])
+            self.content.create_text(260,30+(160*x), text=feeds[x][3])
     
     def buttonWho(self):
         if self.web.token =="":
