@@ -116,12 +116,14 @@ class MainWindow(Frame):
             self.content.create_text(260,360+(160*x), text=images[x][2])
         if profile['following'] == 0:
             button = Button(self.content, text="Follow", command=lambda: self.follow(1,profile["profile_id"]))
-            button.place(x=160, y=250)
+            button_window = self.content.create_window(200, 250, window=button)
             self.canvas_objects.append(button)
+            self.canvas_objects.append(button_window)
         elif profile["following"] == 1:
             button = Button(self.content, text="Unfollow", command=lambda: self.follow(0,profile["profile_id"]))
-            button.place(x=160, y=250)
+            button_window = self.content.create_window(200, 250, window=button)
             self.canvas_objects.append(button)
+            self.canvas_objects.append(button_window)
 
     
     def buttonWho(self):
@@ -155,13 +157,14 @@ class MainWindow(Frame):
                 self.content.create_image(5, 5+(160*x), anchor=NW, image=imgTk)
                 self.canvas_objects.append(imgTk)
 
-                self.content.create_text(260,10+(160*x), text=profile[0].replace('\\',''))
-                self.content.create_text(260,30+(160*x), text=profile[1].replace('\\',''))
-                self.content.create_text(260,50+(160*x), text=profile[2].replace('\\',''))
+                self.content.create_text(275,10+(160*x), text=profile[0].replace('\\',''))
+                self.content.create_text(275,30+(160*x), text=profile[1].replace('\\',''))
+                self.content.create_text(275,50+(160*x), text=profile[2].replace('\\',''))
 
                 view = Button(self.content, text="View Profile", command=lambda pid=profile[5]: self.buttonProfile(pid))
-                view.place(x=235, y=100+(160*x))
+                view_window = self.content.create_window(275, 100+(160*x), window=view)
                 self.canvas_objects.append(view)
+                self.canvas_objects.append(view_window)
                 self.content.pack()
 
     def follow(self, follow, profile_id):
