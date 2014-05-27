@@ -9,17 +9,18 @@ from PIL import Image, ImageTk
 
 
 class MainWindow(Frame):
-  
+
+    """******** Funcion: __init__ && initUI **************
+    Descripcion: inicializan la interfaz
+    Retorno: void
+    ***********************************************************************************************************************"""
     def __init__(self, parent):
         Frame.__init__(self, parent)   
-         
-
         self.parent = parent
         self.content = Canvas()
         self.canvas_objects = []
         self.vbar = 0
         self.temp = 0
-
         self.initUI()
         
     def initUI(self):
@@ -51,6 +52,10 @@ class MainWindow(Frame):
         self.buttonAbout()
         self.pack() 
 
+    """******** Funcion: clearCanvas **************
+    Descripcion: vacia el contenido de la ventana
+    Retorno: void
+    ***********************************************************************************************************************"""
     def clearCanvas(self):
         self.content.delete("all")
         for i in range(len(self.canvas_objects)):
@@ -60,6 +65,19 @@ class MainWindow(Frame):
                 continue
         self.content.yview_moveto(0)
 
+    """******** Funcion: loading **************
+    Descripcion: crea el texto de "loading" durante una carga de datos
+    Retorno: void
+    ***********************************************************************************************************************"""
+    def loading(self):
+        self.clearCanvas()
+        self.content.create_text(200,190, text="Loading")
+        self.parent.update()
+
+    """******** Funcion: buttonToken **************
+    Descripcion: Cuando es precionado token en About, se crea un cuadro para pegar un nuevo token
+    Retorno: void
+    ***********************************************************************************************************************"""
     def buttonToken(self):
         self.clearCanvas()
         e = Entry(self.content)
@@ -72,29 +90,49 @@ class MainWindow(Frame):
         self.canvas_objects.append(button)
         webbrowser.open(self.web.get_token_url)
 
+    """******** Funcion: saveToken **************
+    Descripcion: envia el nuevo token a web para que lo guarde
+    Parametros:
+    new_token string
+    Retorno: void
+    ***********************************************************************************************************************"""
     def saveToken(self, new_token):
         self.web.setToken(new_token)
         self.clearCanvas()
 
-    def buttonThem(self):
-        if self.web.token =="":
-            return
-        self.clearCanvas()
-        for x in range(0,20,2):
-            self.content.create_rectangle(0,0+(100*x),300,100+(100*x), fill="blue")
-            self.content.create_rectangle(0,0+(100*(x+1)),300,100+(100*(x+1)), fill="red")
-
+    """******** Funcion: buttonAbout **************
+    Descripcion: genera la ventana de bienvenida e informacion de la aplicacion
+    Retorno: void
+    ***********************************************************************************************************************"""
     def buttonAbout(self):
         self.clearCanvas()
+        img = Image.open("icon.png")
+        imgTk = ImageTk.PhotoImage(img)
+        self.content.create_image(200, 100, image=imgTk)
+        self.canvas_objects.append(imgTk)
+        self.content.create_text(200,180, text="InstaCrap (R)")
+        self.content.create_text(200,200, text="Developed by: JCastro & MSalinas")
+        self.content.create_text(200,220, text="30 days evaluation copy")
+        self.content.create_text(200,240, text="LP 2014-1")
+
         tokenButton = Button(self.content, text="Get Token", command=lambda: self.buttonToken())
-        tokenButton.place(x=160, y=240)
+        tokenButton.place(x=160, y=440)
         self.canvas_objects.append(tokenButton)
     
+    """******** Funcion: buttonProfile **************
+    Descripcion: pide los datos del prefil a Web y los muestra en ventana
+    Parametros:
+    profile_id entero
+    Retorno: void
+    ***********************************************************************************************************************"""
     def buttonProfile(self, profile_id):
+        self.loading()
+
         if self.web.token =="":
             return
-        self.clearCanvas()
+
         profile = self.web.profile(profile_id)
+        self.clearCanvas()
         if profile == 0:
             return
         img = Image.open(profile['picture_file'])
@@ -125,11 +163,16 @@ class MainWindow(Frame):
             self.canvas_objects.append(button)
             self.canvas_objects.append(button_window)
     
+    """******** Funcion: buttonThem **************
+    Descripcion: pide los datos de feed a Web y los muestra en la ventana
+    Retorno: void
+    ***********************************************************************************************************************"""
     def buttonThem(self):
         if self.web.token =="":
             return
-        self.clearCanvas()
+        self.loading()
         feeds = self.web.feed()
+        self.clearCanvas()
 
         color = ["#989898","#D6D6D6"]
         for x in range(0,len(feeds)):
@@ -141,6 +184,10 @@ class MainWindow(Frame):
             self.content.create_text(260,10+(160*x), text=feeds[x][0])
             self.content.create_text(260,30+(160*x), text=feeds[x][3])
     
+    """******** Funcion: buttonWho **************
+    Descripcion: crea un cuadro para ingresar el string a buscar
+    Retorno: void
+    ***********************************************************************************************************************"""
     def buttonWho(self):
         if self.web.token =="":
             return
@@ -154,9 +201,16 @@ class MainWindow(Frame):
         self.canvas_objects.append(e)
         self.canvas_objects.append(button)
 
+    """******** Funcion: search **************
+    Descripcion: pide a Web que busque el string ingresado
+    Parametros:
+    string string 
+    Retorno: void
+    ***********************************************************************************************************************"""
     def search(self, string):
-        self.clearCanvas()
+        self.loading()
         results = self.web.search(string)
+        self.clearCanvas()
         color = ["#989898","#D6D6D6"]
         if len(results) == 0:
             self.content.create_text(200,10, text="No results")
@@ -182,11 +236,22 @@ class MainWindow(Frame):
                 self.canvas_objects.append(view_window)
                 self.content.pack()
 
+    """******** Funcion: follow **************
+    Descripcion: envia los datos de un perfil a web para follow/Unfollow
+    Parametros:
+    follow entero
+    profile_id entero
+    Retorno: void
+    ***********************************************************************************************************************"""
     def follow(self, follow, profile_id):
+        self.loading()
         self.web.follow(follow, profile_id)
-        self.clearCanvas()
         self.buttonProfile(profile_id)
 
+    """******** Funcion: buttonOut **************
+    Descripcion: finaliza la aplicacion
+    Retorno: void
+    ***********************************************************************************************************************"""
     def buttonOut(self):
         raise SystemExit
 

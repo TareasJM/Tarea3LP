@@ -1,0 +1,16 @@
+Alumnos:
+
+José Miguel Castro Opazo			201273514-9
+Marco Antonio Salinas Carrasco		201273589-0
+
+===============================================
+
+Interfaz:
+
+About: Ventana binevenida
+	Get Token: abre navegador y genera token
+Me: Perfil de la cuenta "ayudantía.lp.usm"
+Them: Feeds de personas que se sigue
+Who?: Buscador de perfiles
+I'm Out: Finalizar aplicación
+Scroll Arrows: Sube y baja el contenido de ser necesario
