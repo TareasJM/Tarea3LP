@@ -1,8 +1,6 @@
 import urllib
 from urllib2 import *
-import cookielib
 import re
-from httplib2 import Http
 import os
 
 class Web():
@@ -36,6 +34,7 @@ class Web():
             the_page = response.read()
         except HTTPError:
             print "HTTP Error 400: BAD REQUEST (posible private)"
+            print 'error_message: you cannot view this resource'
             return 0
 
         profile = {}

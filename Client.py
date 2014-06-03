@@ -134,6 +134,10 @@ class MainWindow(Frame):
         profile = self.web.profile(profile_id)
         self.clearCanvas()
         if profile == 0:
+            et = '"error_type":"APINotAllowedError"'
+            em = '"error_message": "you cannot view this resource"'
+            self.content.create_text(200,190, text=et)
+            self.content.create_text(200,210, text=em)
             return
         img = Image.open(profile['picture_file'])
         imgTk = ImageTk.PhotoImage(img)
